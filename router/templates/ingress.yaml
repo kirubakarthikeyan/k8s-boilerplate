@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: router
+  namespace: {{ .Values.scope.environment_id }}
+spec:
+  ingressClassName: nginx
+  rules:
+     - http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: api
+                port:
+                  number: 80
+            path: /

@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.scope.app_id }}
+  namespace: {{ .Values.scope.environment_id }}
+  labels:
+    environmentId: {{ .Values.scope.environment_id }}
+    appId: {{ .Values.scope.app_id }}
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+    {{- if eq .Values.autoscaling.max_instances 1.0 }}
+      maxSurge: 1
+    {{- else }}
+      maxSurge: 25%
+      maxUnavailable: 10%
+    {{- end }}
+  {{- if eq .Values.autoscaling.enabled false }}
+  replicas: 2
+  {{- end }}
+  selector:
+    matchLabels:
+      environmentId: {{ .Values.environment_id }}
+      appId: {{ .Values.scope.app_id }}
+  template:
+    metadata:
+      labels:
+        environmentId: {{ .Values.environment_id }}
+        appId: {{ .Values.scope.app_id }}
+    annotations:
+      revision: {{ .Values.revision }}
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: "appId"
+                      operator: In
+                      values:
+                      - {{ .Values.scope.app_id }}
+                topologyKey: "kubernetes.io/hostname"
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: {{ .Values.gracefull_shutdown_seconds }}
+      securityContext: {}
+      containers:
+        - name: {{ .Values.scope.app_id }}
+          securityContext: {}
+          image: "{{ .Values.image_with_tag }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            {{- range $secret := .Values.secrets }}
+            - name: {{ $secret.key }}
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ $.Values.identifier.app_id }}"
+                  key: {{ $secret.key }}
+            {{- end }}
+          ports:
+            {{- range $port := .Values.ports }}
+            - containerPort: {{ $port.target_port }}
+              protocol: TCP
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 5
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 5
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 1
+          resources:
+            limits:
+              cpu: {{ .Values.resources.max_cpu }}
+              memory: {{ .Values.resources.memory }}Mi
+            requests:
+              cpu: {{ .Values.resources.cpu }}
+              memory: {{ .Values.resources.memory }}Mi
+          volumeMounts:
+            {{- range $mounted_file := .Values.mounted_files }}
+            - mountPath: "{{ $mounted_file.mount_path }}"
+              subPath: content
+              name: "{{ $mounted_file.id }}-{{ .Values.scope.app_id }}"
+              readOnly: true
+            {{- end }}
+      volumes:
+        {{- range $mounted_file := .Values.mounted_files }}
+        - name: "{{ $mounted_file.id }}-{{ .Values.scope.app_id }}"
+          secret:
+            secretName: "{{ $mounted_file.id }}-{{ .Values.scope.app_id }}"
+        {{- end }}
