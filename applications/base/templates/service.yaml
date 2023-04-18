@@ -2,12 +2,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.scope.app_id }}
-  namespace: {{ .Values.scope.environment_id }}
+  namespace: {{ .Release.Namespace }}
   labels:
     environmentId: {{ .Values.scope.environment_id }}
     appId: {{ .Values.scope.app_id }}
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
     {{- range $port := .Values.ports }}
     - protocol: TCP

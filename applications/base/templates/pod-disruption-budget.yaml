@@ -1,8 +1,8 @@
-apiVersion: policy/v1beta1
+apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: {{ .Values.scope.app_id }}
-  namespace: {{ .Values.scope.environment_id }}
+  namespace: {{ .Release.Namespace }}
   labels:
     environmentId: {{ .Values.scope.environment_id }}
     appId: {{ .Values.scope.app_id }}

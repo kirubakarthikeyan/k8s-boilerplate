@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.scope.app_id }}
-  namespace: {{ .Values.scope.environment_id }}
+  namespace: {{ .Release.Namespace }}
   labels:
     environmentId: {{ .Values.scope.environment_id }}
     appId: {{ .Values.scope.app_id }}
@@ -21,15 +21,15 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      environmentId: {{ .Values.environment_id }}
+      environmentId: {{ .Values.scope.environment_id }}
       appId: {{ .Values.scope.app_id }}
   template:
     metadata:
       labels:
-        environmentId: {{ .Values.environment_id }}
+        environmentId: {{ .Values.scope.environment_id }}
         appId: {{ .Values.scope.app_id }}
-    annotations:
-      revision: {{ .Values.revision }}
+    # annotations:
+    #   revision: {{ .Values.revision }}
     spec:
       affinity:
         podAntiAffinity:
@@ -49,25 +49,27 @@ spec:
       containers:
         - name: {{ .Values.scope.app_id }}
           securityContext: {}
-          image: "{{ .Values.image_with_tag }}"
-          imagePullPolicy: IfNotPresent
+          image: "{{ .Values.image }}:{{.Values.tag}}"
+          imagePullPolicy: Always
           env:
             {{- range $secret := .Values.secrets }}
             - name: {{ $secret.key }}
               valueFrom:
                 secretKeyRef:
-                  name: "{{ $.Values.identifier.app_id }}"
+                  name: "{{ $.Values.scope.app_id }}"
                   key: {{ $secret.key }}
             {{- end }}
           ports:
             {{- range $port := .Values.ports }}
-            - containerPort: {{ $port.target_port }}
+            - name: {{ $port.name }}
+              containerPort: {{ $port.target_port }}
               protocol: TCP
             {{- end }}
           livenessProbe:
             httpGet:
-              path: /health
-              port: http
+              path: {{ .Values.liveness.endpoint }}
+              port: {{ .Values.liveness.port_name }}
+              scheme: HTTP
             initialDelaySeconds: 60
             periodSeconds: 5
             timeoutSeconds: 1
@@ -75,8 +77,9 @@ spec:
             failureThreshold: 1
           readinessProbe:
             httpGet:
-              path: /ready
-              port: http
+              path: {{ .Values.readiness.endpoint }}
+              port: {{ .Values.readiness.port_name }}
+              scheme: HTTP
             initialDelaySeconds: 60
             periodSeconds: 5
             timeoutSeconds: 1
@@ -84,11 +87,11 @@ spec:
             failureThreshold: 1
           resources:
             limits:
-              cpu: {{ .Values.resources.max_cpu }}
-              memory: {{ .Values.resources.memory }}Mi
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}Mi
             requests:
-              cpu: {{ .Values.resources.cpu }}
-              memory: {{ .Values.resources.memory }}Mi
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}Mi
           volumeMounts:
             {{- range $mounted_file := .Values.mounted_files }}
             - mountPath: "{{ $mounted_file.mount_path }}"

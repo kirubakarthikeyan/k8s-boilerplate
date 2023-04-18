@@ -1,1 +1,33 @@
 scope:
+  app_id: kube
+  environment_id: production
+image: "gcr.io/pilot-379607/kube"
+tag: "v1"
+availability:
+  min_instances: 1
+  max_instances: 1
+ports:
+- external_port: 80
+  target_port: 3000
+  name: kube
+secrets: []
+autoscaling:
+  enabled: true
+  min_instances: 1
+  max_instances: 4
+  target_cpu_utilization_percentage: 60
+  target_memory_utilization_percentage: 60
+resources:
+  limits:
+    cpu: 1
+    memory: 512
+  requests:
+    cpu: 0.5
+    memory: 256
+gracefull_shutdown_seconds: 60
+liveness:
+  endpoint: /health
+  port_name: kube
+readiness:
+  endpoint: /ready
+  port_name: kube

@@ -1,9 +1,9 @@
 {{- if .Values.autoscaling.enabled }}
-apiVersion: autoscaling/v1
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ .Values.scope.app_id }}
-  namespace: {{ .Values.scope.environment_id }}
+  namespace: {{ .Release.Namespace }}
   labels:
     environmentId: {{ .Values.scope.environment_id }}
     appId: {{ .Values.scope.app_id }}
