@@ -45,22 +45,18 @@ spec:
                 topologyKey: "kubernetes.io/hostname"
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: {{ .Values.gracefull_shutdown_seconds }}
-      securityContext: 
-        runAsUser: 1001
-        runAsGroup: 1001
-        runAsNonRoot: true
-        privileged: false
-        allowPrivilegeEscalation: false
       containers:
         - name: {{ .Values.scope.app_id }}
           image: "{{ .Values.image }}:{{.Values.tag}}"
           imagePullPolicy: Always
           securityContext: 
-            runAsUser: 1001
-            runAsGroup: 1001
+            # runAsUser: 10001
+            # runAsGroup: 1001
             runAsNonRoot: true
             privileged: false
             allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           env:
             {{- range $secret := .Values.secrets }}
             - name: {{ $secret.key }}
@@ -119,3 +115,5 @@ spec:
 # SECURITY PRACTICES
 #https://stackoverflow.com/questions/73358804/where-did-kubernetes-security-context-runasuser-1000-come-from
 #https://www.cncf.io/blog/2020/10/16/hack-my-mis-configured-kubernetes-privileged-pods/
+#https://snyk.io/blog/kubernetes-securitycontext-linux-capabilities/
+#https://macrosec.tech/index.php/2021/06/08/linux-privilege-escalation-techniques-using-suid/
