@@ -50,8 +50,8 @@ spec:
           image: "{{ .Values.image }}:{{.Values.tag}}"
           imagePullPolicy: Always
           securityContext: 
-            # runAsUser: 10001
-            # runAsGroup: 1001
+            runAsUser: 10001
+            runAsGroup: 1001
             runAsNonRoot: true
             privileged: false
             allowPrivilegeEscalation: false
