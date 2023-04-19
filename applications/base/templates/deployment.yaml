@@ -55,6 +55,7 @@ spec:
             runAsNonRoot: true
             privileged: false
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
           env:
