@@ -7,7 +7,7 @@ metadata:
     environmentId: {{ .Values.scope.environment_id }}
     appId: {{ .Values.scope.app_id }}
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     {{- range $port := .Values.ports }}
     - protocol: TCP
