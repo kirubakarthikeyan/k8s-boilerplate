@@ -48,7 +48,7 @@ spec:
       containers:
         - name: {{ .Values.scope.app_id }}
           image: "{{ .Values.image }}:{{.Values.tag}}"
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           securityContext: 
             runAsUser: 10001
             runAsGroup: 1001
