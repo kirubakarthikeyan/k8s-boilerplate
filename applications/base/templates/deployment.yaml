@@ -55,6 +55,12 @@ spec:
         - name: {{ .Values.scope.app_id }}
           image: "{{ .Values.image }}:{{.Values.tag}}"
           imagePullPolicy: Always
+          securityContext: 
+            runAsUser: 1001
+            runAsGroup: 1001
+            runAsNonRoot: true
+            privileged: false
+            allowPrivilegeEscalation: false
           env:
             {{- range $secret := .Values.secrets }}
             - name: {{ $secret.key }}
