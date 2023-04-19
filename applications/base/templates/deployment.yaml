@@ -45,10 +45,14 @@ spec:
                 topologyKey: "kubernetes.io/hostname"
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: {{ .Values.gracefull_shutdown_seconds }}
-      securityContext: {}
+      securityContext: 
+        runAsUser: 1001
+        runAsGroup: 1001
+        runAsNonRoot: true
+        privileged: false
+        allowPrivilegeEscalation: false
       containers:
         - name: {{ .Values.scope.app_id }}
-          securityContext: {}
           image: "{{ .Values.image }}:{{.Values.tag}}"
           imagePullPolicy: Always
           env:
@@ -105,3 +109,7 @@ spec:
           secret:
             secretName: "{{ $mounted_file.id }}-{{ .Values.scope.app_id }}"
         {{- end }}
+
+# SECURITY PRACTICES
+#https://stackoverflow.com/questions/73358804/where-did-kubernetes-security-context-runasuser-1000-come-from
+#https://www.cncf.io/blog/2020/10/16/hack-my-mis-configured-kubernetes-privileged-pods/
